@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown Formatter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel-strong: rgba(255, 255, 255, 0.1);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #7c3aed;
+        --accent-2: #22c55e;
+        --danger: #ef4444;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        --sans: "Inter", "Google Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      }
+
+      [data-theme="light"] {
+        --bg: #f6f7fb;
+        --panel: rgba(255, 255, 255, 0.9);
+        --panel-strong: rgba(255, 255, 255, 1);
+        --text: rgba(16, 24, 40, 0.92);
+        --muted: rgba(16, 24, 40, 0.62);
+        --border: rgba(16, 24, 40, 0.12);
+        --accent: #2563eb;
+        --accent-2: #16a34a;
+        --danger: #dc2626;
+        --shadow: 0 18px 55px rgba(15, 23, 42, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background: radial-gradient(1200px 700px at 20% 10%, rgba(124, 58, 237, 0.35), transparent 50%),
+          radial-gradient(900px 500px at 80% 30%, rgba(34, 197, 94, 0.22), transparent 55%), var(--bg);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 22px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .title {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        letter-spacing: 0.2px;
+      }
+
+      .badge {
+        font-size: 12px;
+        color: var(--muted);
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      .title-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 9px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: none;
+        transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
+        font-size: 13px;
+        font-family: var(--sans);
+      }
+
+      .btn.icon {
+        padding: 8px 10px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        line-height: 0;
+      }
+
+      .btn.icon svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      .btn:hover {
+        background: var(--panel-strong);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+
+      .btn:active {
+        transform: translateY(1px);
+      }
+
+      .btn.primary {
+        background: linear-gradient(135deg, var(--accent), rgba(124, 58, 237, 0.55));
+        border-color: rgba(124, 58, 237, 0.55);
+      }
+
+      [data-theme="light"] .btn.primary {
+        background: linear-gradient(135deg, var(--accent), rgba(37, 99, 235, 0.2));
+        border-color: rgba(37, 99, 235, 0.35);
+      }
+
+      .btn.good {
+        border-color: rgba(34, 197, 94, 0.35);
+      }
+
+      .btn.danger {
+        border-color: rgba(239, 68, 68, 0.35);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        min-height: 520px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel header {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .panel header .label {
+        font-weight: 650;
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+        font-family: var(--sans);
+      }
+
+      textarea {
+        width: 100%;
+        flex: 1;
+        border: 0;
+        outline: none;
+        resize: none;
+        padding: 14px;
+        background: transparent;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .preview {
+        flex: 1;
+        padding: 14px;
+        overflow: auto;
+      }
+
+      .status {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: var(--sans);
+      }
+
+      .status .err {
+        color: var(--danger);
+      }
+
+      .preview h1,
+      .preview h2,
+      .preview h3,
+      .preview h4 {
+        margin: 0.7em 0 0.35em;
+      }
+
+      .preview p {
+        margin: 0.55em 0;
+        color: var(--text);
+      }
+
+      .preview code {
+        font-family: var(--mono);
+        font-size: 0.92em;
+        padding: 2px 6px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      [data-theme="light"] .preview code {
+        background: rgba(2, 6, 23, 0.04);
+      }
+
+      .preview ul {
+        margin: 0.55em 0;
+        padding-left: 1.2em;
+      }
+
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+        font-family: var(--sans);
+      }
+
+      input[type="text"],
+      input[type="file"],
+      select {
+        font-family: var(--sans);
+      }
+
+      input[type="file"]::file-selector-button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 9px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        font-size: 13px;
+        font-family: var(--sans);
+        margin-right: 10px;
+      }
+
+      input[type="file"]::file-selector-button:hover {
+        background: var(--panel-strong);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+
+      input[type="file"]::-webkit-file-upload-button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 9px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        font-size: 13px;
+        font-family: var(--sans);
+        margin-right: 10px;
+      }
+
+      input[type="file"]::-webkit-file-upload-button:hover {
+        background: var(--panel-strong);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+
+      .badge {
+        font-family: var(--sans);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="app">
+      <div class="topbar">
+        <div class="title">
+          <div class="title-left">
+            <button class="btn icon" id="themeBtn" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
+            <h1>Markdown Formatter</h1>
+          </div>
+          <span class="badge" id="portBadge">Local</span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="googleConnectBtn" type="button">Connect Google</button>
+          <button class="btn" id="googleDisconnectBtn" type="button" style="display: none">Disconnect</button>
+          <button class="btn icon" id="sampleBtn" type="button" aria-label="Load sample" title="Load sample"></button>
+          <button class="btn danger" id="clearBtn" type="button">Clear</button>
+          <button class="btn good" id="copyBtn" type="button">Copy HTML</button>
+          <button class="btn" id="downloadBtn" type="button">Download HTML</button>
+          <button class="btn primary" id="formatBtn" type="button">Format</button>
+        </div>
+      </div>
+
+      <section class="panel" style="min-height: unset; margin-bottom: 14px">
+        <header>
+          <div class="label">Google Docs (clean in place)</div>
+          <div class="small" id="googleStatus">Checking…</div>
+        </header>
+        <div style="padding: 14px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center">
+          <input
+            id="googleDocUrl"
+            placeholder="Paste Google Doc link (https://docs.google.com/document/d/...)"
+            style="width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text);"
+          />
+          <select
+            id="googleMode"
+            style="padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text);"
+          >
+            <option value="in_place" selected>In place</option>
+            <option value="copy" disabled>Copy (soon)</option>
+          </select>
+          <button class="btn primary" id="googleCleanBtn" type="button">Clean Doc</button>
+        </div>
+        <div style="padding: 0 14px 14px" class="small" id="googleHint"></div>
+      </section>
+
+      <section class="panel" style="min-height: unset; margin-bottom: 14px">
+        <header>
+          <div class="label">Document Import (.docx)</div>
+          <div class="small" id="importStatus">Ready</div>
+        </header>
+        <div style="padding: 14px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center">
+          <input
+            id="docFile"
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            style="width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text);"
+          />
+          <button class="btn" id="importBtn" type="button">Import</button>
+          <button class="btn good" id="downloadImportedBtn" type="button" disabled>Download HTML</button>
+        </div>
+        <div style="padding: 0 14px 14px" class="small" id="importHint"></div>
+      </section>
+
+      <div class="layout">
+        <section class="panel">
+          <header>
+            <div class="label">Markdown input</div>
+            <div class="small" id="inputMeta">0 chars</div>
+          </header>
+          <textarea id="markdownInput" spellcheck="false" placeholder="Type Markdown here… (e.g. # Heading, **bold**, *italic*, `code`, - lists)"></textarea>
+        </section>
+
+        <section class="panel">
+          <header>
+            <div class="label">Preview (HTML)</div>
+            <div class="small" id="previewMeta">Ready</div>
+          </header>
+          <div class="preview" id="preview"></div>
+        </section>
+      </div>
+
+      <div class="status">
+        <div id="statusLeft">Idle</div>
+        <div id="statusRight" class="small"></div>
+      </div>
+    </div>
+
+    <script>
+      const els = {
+        app: document.getElementById('app'),
+        portBadge: document.getElementById('portBadge'),
+        googleConnectBtn: document.getElementById('googleConnectBtn'),
+        googleDisconnectBtn: document.getElementById('googleDisconnectBtn'),
+        googleStatus: document.getElementById('googleStatus'),
+        googleHint: document.getElementById('googleHint'),
+        googleDocUrl: document.getElementById('googleDocUrl'),
+        googleMode: document.getElementById('googleMode'),
+        googleCleanBtn: document.getElementById('googleCleanBtn'),
+        importStatus: document.getElementById('importStatus'),
+        importHint: document.getElementById('importHint'),
+        docFile: document.getElementById('docFile'),
+        importBtn: document.getElementById('importBtn'),
+        downloadImportedBtn: document.getElementById('downloadImportedBtn'),
+        themeBtn: document.getElementById('themeBtn'),
+        sampleBtn: document.getElementById('sampleBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        copyBtn: document.getElementById('copyBtn'),
+        downloadBtn: document.getElementById('downloadBtn'),
+        formatBtn: document.getElementById('formatBtn'),
+        markdownInput: document.getElementById('markdownInput'),
+        preview: document.getElementById('preview'),
+        inputMeta: document.getElementById('inputMeta'),
+        previewMeta: document.getElementById('previewMeta'),
+        statusLeft: document.getElementById('statusLeft'),
+        statusRight: document.getElementById('statusRight'),
+      };
+
+      const SAMPLE = `# Markdown Formatter\n\nType **bold**, *italic*, ~~strike~~, and \`code\`.\n\n## Lists\n- First item\n- Second item\n- Third item\n\n### Notes\nThis app formats a small Markdown subset into HTML.`;
+
+      const ICONS = {
+        sun: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2.5M12 19.5V22M4.22 4.22 6 6M18 18l1.78 1.78M2 12h2.5M19.5 12H22M4.22 19.78 6 18M18 6l1.78-1.78" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+        moon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 14.5A7.5 7.5 0 0 1 9.5 3a6.8 6.8 0 1 0 11.5 11.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        fileText: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 13h8M8 17h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+      };
+
+      function renderIcons() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        els.themeBtn.innerHTML = current === 'dark' ? ICONS.sun : ICONS.moon;
+        els.sampleBtn.innerHTML = ICONS.fileText;
+      }
+
+      function setTheme(next) {
+        if (next) {
+          document.documentElement.setAttribute('data-theme', next);
+        }
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        localStorage.setItem('theme', current);
+        renderIcons();
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        renderIcons();
+      }
+
+      function updateMeta() {
+        els.inputMeta.textContent = `${els.markdownInput.value.length} chars`;
+      }
+
+      function setStatus(left, right, isError) {
+        els.statusLeft.textContent = left;
+        els.statusRight.textContent = right || '';
+        els.statusLeft.className = isError ? 'err' : '';
+      }
+
+       const state = {
+         lastImportedHtml: '',
+         lastExportBase: '',
+       };
+
+      async function formatMarkdown() {
+        const text = els.markdownInput.value;
+        updateMeta();
+
+        if (!text.trim()) {
+          els.preview.innerHTML = '';
+          els.previewMeta.textContent = 'Ready';
+          setStatus('Nothing to format', '', false);
+          return;
+        }
+
+        setStatus('Formatting…', 'POST /format', false);
+        els.previewMeta.textContent = 'Working…';
+
+        try {
+          const res = await fetch('/format', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const msg = data && data.error ? data.error : `HTTP ${res.status}`;
+            throw new Error(msg);
+          }
+
+          const html = (data && data.html) || '';
+          els.preview.innerHTML = html;
+          els.previewMeta.textContent = 'Updated';
+          setStatus('Done', `${new Date().toLocaleTimeString()}`, false);
+        } catch (e) {
+          els.previewMeta.textContent = 'Error';
+          setStatus('Error formatting', e && e.message ? e.message : String(e), true);
+        }
+      }
+
+      async function copyHtml() {
+        try {
+          const html = els.preview.innerHTML || '';
+          await navigator.clipboard.writeText(html);
+          setStatus('Copied HTML', '', false);
+        } catch {
+          setStatus('Copy failed', 'Clipboard permission blocked', true);
+        }
+      }
+
+      function downloadHtml() {
+        const html = els.preview.innerHTML || '';
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${state.lastExportBase || 'formatted'}.html`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setStatus('Downloaded', a.download, false);
+      }
+
+       function downloadImportedHtml() {
+         const html = state.lastImportedHtml || '';
+         if (!html) {
+           setStatus('Nothing to download', '', true);
+           return;
+         }
+         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+         const url = URL.createObjectURL(blob);
+         const a = document.createElement('a');
+         a.href = url;
+         a.download = `${state.lastExportBase || 'document'}.html`;
+         document.body.appendChild(a);
+         a.click();
+         a.remove();
+         URL.revokeObjectURL(url);
+         setStatus('Downloaded', a.download, false);
+       }
+
+       async function importDocx() {
+         const file = els.docFile.files && els.docFile.files[0];
+         if (!file) {
+           setStatus('No file selected', 'Choose a .docx file', true);
+           return;
+         }
+
+         els.importStatus.textContent = 'Importing…';
+         els.importHint.textContent = '';
+         els.downloadImportedBtn.disabled = true;
+         setStatus('Importing document…', file.name, false);
+
+         try {
+           const form = new FormData();
+           form.append('file', file, file.name);
+
+           const res = await fetch('/api/import/docx', {
+             method: 'POST',
+             body: form,
+           });
+
+           const data = await res.json().catch(() => ({}));
+           if (!res.ok) {
+             throw new Error(data?.error || `HTTP ${res.status}`);
+           }
+
+           state.lastImportedHtml = data?.html || '';
+           state.lastExportBase = data?.filenameBase || (file.name.replace(/\.[^./\\]+$/u, '') || 'document');
+           els.preview.innerHTML = state.lastImportedHtml;
+           els.previewMeta.textContent = 'Imported';
+           els.importStatus.textContent = 'Imported';
+           els.downloadImportedBtn.disabled = !state.lastImportedHtml;
+
+           const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
+           els.importHint.textContent = warnings.length ? `Conversion warnings: ${warnings.slice(0, 3).join(' | ')}` : 'Preview updated. You can download the HTML.';
+           setStatus('Imported', `${state.lastExportBase}.docx`, false);
+         } catch (e) {
+           els.importStatus.textContent = 'Error';
+           els.importHint.textContent = e && e.message ? e.message : String(e);
+           setStatus('Import failed', e && e.message ? e.message : String(e), true);
+         }
+       }
+
+      function loadSample() {
+        els.markdownInput.value = SAMPLE;
+        updateMeta();
+        formatMarkdown();
+      }
+
+      function clearAll() {
+        els.markdownInput.value = '';
+        els.preview.innerHTML = '';
+        els.previewMeta.textContent = 'Ready';
+        updateMeta();
+        setStatus('Cleared', '', false);
+      }
+
+      function debounce(fn, wait) {
+        let t;
+        return (...args) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn(...args), wait);
+        };
+      }
+
+       async function refreshGoogleStatus() {
+         try {
+           const res = await fetch('/api/google/status');
+           const data = await res.json();
+
+           if (!data.hasConfig) {
+             els.googleStatus.textContent = 'Missing OAuth config';
+             els.googleHint.textContent = 'Add local-deployment/google_oauth_credentials.json (or env vars).';
+             els.googleConnectBtn.style.display = '';
+             els.googleDisconnectBtn.style.display = 'none';
+             return;
+           }
+
+           if (data.connected) {
+             els.googleStatus.textContent = 'Connected';
+             els.googleHint.textContent = 'Paste a Google Doc link you can edit, then click Clean Doc.';
+             els.googleConnectBtn.style.display = 'none';
+             els.googleDisconnectBtn.style.display = '';
+             return;
+           }
+
+           els.googleStatus.textContent = 'Not connected';
+           els.googleHint.textContent = `Click “Connect Google”. Redirect URI must match: ${data.redirectUri}`;
+           els.googleConnectBtn.style.display = '';
+           els.googleDisconnectBtn.style.display = 'none';
+         } catch {
+           els.googleStatus.textContent = 'Status check failed';
+           els.googleHint.textContent = 'Is the server running?';
+         }
+       }
+
+       async function disconnectGoogle() {
+         await fetch('/api/google/disconnect', { method: 'POST' }).catch(() => {});
+         await refreshGoogleStatus();
+         setStatus('Disconnected Google', '', false);
+       }
+
+       async function cleanGoogleDoc() {
+         const docUrl = String(els.googleDocUrl.value || '').trim();
+         const mode = String(els.googleMode.value || 'in_place');
+
+         if (!docUrl) {
+           setStatus('Missing link', 'Paste a Google Doc link first', true);
+           return;
+         }
+
+         setStatus('Cleaning Google Doc…', 'This edits the doc in place', false);
+         try {
+           const res = await fetch('/api/google/clean-doc', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ docUrl, mode }),
+           });
+           const data = await res.json().catch(() => ({}));
+           if (!res.ok) {
+             if (data?.code === 'NO_EDIT_ACCESS') {
+               els.googleHint.textContent = data?.guidance || 'Please grant edit access and retry.';
+               throw new Error(data?.error || 'No edit access');
+             }
+             if (data?.code === 'GOOGLE_FORBIDDEN') {
+               els.googleHint.textContent = 'Access denied. Make sure you are connected with the correct Google account that has Editor access.';
+               throw new Error(data?.error || 'Forbidden');
+             }
+             if (data?.code === 'DOC_NOT_FOUND') {
+               els.googleHint.textContent = 'Check the link and confirm the document exists and is shared with your connected account.';
+               throw new Error(data?.error || 'Not found');
+             }
+             const msg = data && data.error ? data.error : `HTTP ${res.status}`;
+             throw new Error(msg);
+           }
+           const rc = data?.result?.requestCount ?? 0;
+           const chunks = data?.result?.chunks ?? 0;
+           els.googleHint.textContent =
+             'Done. If you temporarily enabled “Anyone with the link can edit”, consider changing it back to Viewer/Restricted now.';
+           setStatus('Google Doc cleaned', `Requests: ${rc} (chunks: ${chunks})`, false);
+         } catch (e) {
+           setStatus('Google clean failed', e && e.message ? e.message : String(e), true);
+         }
+       }
+
+      const debouncedFormat = debounce(formatMarkdown, 220);
+
+      els.themeBtn.addEventListener('click', toggleTheme);
+      els.googleConnectBtn.addEventListener('click', () => {
+        window.location.href = '/auth/google';
+      });
+      els.googleDisconnectBtn.addEventListener('click', disconnectGoogle);
+      els.googleCleanBtn.addEventListener('click', cleanGoogleDoc);
+      els.importBtn.addEventListener('click', importDocx);
+      els.downloadImportedBtn.addEventListener('click', downloadImportedHtml);
+      els.sampleBtn.addEventListener('click', loadSample);
+      els.clearBtn.addEventListener('click', clearAll);
+      els.copyBtn.addEventListener('click', copyHtml);
+      els.downloadBtn.addEventListener('click', downloadHtml);
+      els.formatBtn.addEventListener('click', formatMarkdown);
+      els.markdownInput.addEventListener('input', () => {
+        updateMeta();
+        debouncedFormat();
+      });
+
+      const storedTheme = localStorage.getItem('theme');
+      document.documentElement.setAttribute('data-theme', storedTheme || 'dark');
+      setTheme(storedTheme || 'dark');
+      els.portBadge.textContent = `${location.hostname}:${location.port}`;
+      updateMeta();
+      setStatus('Idle', '', false);
+      refreshGoogleStatus();
+    </script>
+  </body>
+</html>
