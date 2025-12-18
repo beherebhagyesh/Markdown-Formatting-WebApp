@@ -17,8 +17,16 @@ function readJsonIfExists(filePath) {
 function getOAuthConfig() {
   const creds = readJsonIfExists(CREDS_PATH);
 
-  const clientId = process.env.GOOGLE_CLIENT_ID || creds?.installed?.client_id || creds?.web?.client_id;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || creds?.installed?.client_secret || creds?.web?.client_secret;
+  const clientId =
+    process.env.GOOGLE_OAUTH_CLIENT_ID ||
+    process.env.GOOGLE_CLIENT_ID ||
+    creds?.installed?.client_id ||
+    creds?.web?.client_id;
+  const clientSecret =
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET ||
+    process.env.GOOGLE_CLIENT_SECRET ||
+    creds?.installed?.client_secret ||
+    creds?.web?.client_secret;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || creds?.installed?.redirect_uris?.[0] || creds?.web?.redirect_uris?.[0];
 
   if (!clientId || !clientSecret || !redirectUri) {

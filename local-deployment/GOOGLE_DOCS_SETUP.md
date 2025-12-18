@@ -27,9 +27,11 @@ In Google Cloud Console:
 
 ### Option B: environment variables
 Set:
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_REDIRECT_URI=http://localhost:30777/auth/google/callback`
+- `GOOGLE_OAUTH_CLIENT_ID` (or legacy `GOOGLE_CLIENT_ID`)
+- `GOOGLE_OAUTH_CLIENT_SECRET` (or legacy `GOOGLE_CLIENT_SECRET`)
+- `GOOGLE_REDIRECT_URI`
+  - Local: `http://localhost:30777/auth/google/callback`
+  - Live (Render/Vercel/etc.): `https://YOUR_DOMAIN/auth/google/callback`
 
 ## 3) Install deps and run
 From `local-deployment/`:

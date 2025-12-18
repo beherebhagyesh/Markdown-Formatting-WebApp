@@ -47,21 +47,27 @@
  ### 2) Google Docs (clean in place)
  This edits the Google Doc directly.
 
- - Follow `local-deployment/GOOGLE_DOCS_SETUP.md`
- - Create `local-deployment/google_oauth_credentials.json`
- - Start the server and click **Connect Google** in the UI
- - Paste a Google Doc link you can edit, then click **Clean Doc**
+- Follow `local-deployment/GOOGLE_DOCS_SETUP.md`
+- Create `local-deployment/google_oauth_credentials.json`
+- Start the server and click **Connect Google** in the UI
+- Paste a Google Doc link you can edit, then click **Clean Doc**
 
- Notes:
- - The redirect URI must match what you configure in Google Cloud:
-   - `http://localhost:30777/auth/google/callback`
- - The app checks Drive metadata to confirm you have edit access and will guide you if you don’t.
+Notes:
+- The redirect URI must match what you configure in Google Cloud:
+  - `http://localhost:30777/auth/google/callback`
+- For live hosting (Render/Vercel/etc.) set `GOOGLE_REDIRECT_URI` to:
+  - `https://YOUR_DOMAIN/auth/google/callback`
+- Environment variables supported:
+  - `GOOGLE_OAUTH_CLIENT_ID` (or legacy `GOOGLE_CLIENT_ID`)
+  - `GOOGLE_OAUTH_CLIENT_SECRET` (or legacy `GOOGLE_CLIENT_SECRET`)
+  - `GOOGLE_REDIRECT_URI`
+- The app checks Drive metadata to confirm you have edit access and will guide you if you don’t.
 
- ### 3) Document Import (.docx)
- - Choose a `.docx` file
- - Click **Import**
- - The HTML preview updates
- - Click **Download HTML** to download the converted file named after the original
+### 3) Document Import (.docx)
+- Choose a `.docx` file
+- Click **Import**
+- The HTML preview updates
+- Click **Download HTML** to download the converted file named after the original
 
  ## Security / Git
  Sensitive local files should never be committed:
